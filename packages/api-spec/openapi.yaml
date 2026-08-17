@@ -1,0 +1,824 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Ledgerway procurement-to-payment API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: dashboard
+  - name: requisitions
+  - name: approvals
+  - name: purchase-orders
+  - name: receiving
+  - name: vendors
+  - name: invoices
+  - name: payments
+  - name: budgets
+  - name: analytics
+  - name: settings
+  - name: audit
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /orgs/{orgSlug}/dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get role-aware dashboard summary
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /orgs/{orgSlug}/requisitions:
+    get:
+      operationId: listRequisitions
+      tags: [requisitions]
+      summary: List requisitions
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/Search"
+      responses:
+        "200":
+          description: Requisition list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Requisition"
+    post:
+      operationId: createRequisition
+      tags: [requisitions]
+      summary: Create a requisition
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequisitionInput"
+      responses:
+        "201":
+          description: Created requisition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Requisition"
+  /orgs/{orgSlug}/requisitions/{requisitionId}:
+    get:
+      operationId: getRequisition
+      tags: [requisitions]
+      summary: Get a requisition
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - $ref: "#/components/parameters/RequisitionId"
+      responses:
+        "200":
+          description: Requisition detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequisitionDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /orgs/{orgSlug}/requisitions/{requisitionId}/submit:
+    post:
+      operationId: submitRequisition
+      tags: [requisitions]
+      summary: Submit a requisition for approval
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - $ref: "#/components/parameters/RequisitionId"
+      responses:
+        "200":
+          description: Submitted requisition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequisitionDetail"
+  /orgs/{orgSlug}/requisitions/{requisitionId}/withdraw:
+    post:
+      operationId: withdrawRequisition
+      tags: [requisitions]
+      summary: Withdraw a pending requisition
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - $ref: "#/components/parameters/RequisitionId"
+      responses:
+        "200":
+          description: Withdrawn requisition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequisitionDetail"
+  /orgs/{orgSlug}/approvals/queue:
+    get:
+      operationId: listApprovalQueue
+      tags: [approvals]
+      summary: List approval steps assigned to the current user
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      responses:
+        "200":
+          description: Approval queue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApprovalItem"
+  /orgs/{orgSlug}/approvals/{stepId}/decide:
+    post:
+      operationId: decideApproval
+      tags: [approvals]
+      summary: Approve, reject, or request changes
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - name: stepId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalDecisionInput"
+      responses:
+        "200":
+          description: Updated approval item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalItem"
+  /orgs/{orgSlug}/purchase-orders:
+    get:
+      operationId: listPurchaseOrders
+      tags: [purchase-orders]
+      summary: List purchase orders
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/Search"
+      responses:
+        "200":
+          description: Purchase order list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PurchaseOrder"
+    post:
+      operationId: createPurchaseOrder
+      tags: [purchase-orders]
+      summary: Create a purchase order
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseOrderInput"
+      responses:
+        "201":
+          description: Created purchase order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+  /orgs/{orgSlug}/purchase-orders/{purchaseOrderId}/issue:
+    post:
+      operationId: issuePurchaseOrder
+      tags: [purchase-orders]
+      summary: Issue a purchase order and commit budget
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - name: purchaseOrderId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Issued purchase order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+  /orgs/{orgSlug}/vendors:
+    get:
+      operationId: listVendors
+      tags: [vendors]
+      summary: List vendors
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - $ref: "#/components/parameters/Search"
+      responses:
+        "200":
+          description: Vendor list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vendor"
+    post:
+      operationId: createVendor
+      tags: [vendors]
+      summary: Create a vendor
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VendorInput"
+      responses:
+        "201":
+          description: Created vendor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vendor"
+  /orgs/{orgSlug}/receiving:
+    post:
+      operationId: createReceivingRecord
+      tags: [receiving]
+      summary: Record received goods or services
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceivingInput"
+      responses:
+        "201":
+          description: Receiving record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceivingRecord"
+  /orgs/{orgSlug}/invoices:
+    get:
+      operationId: listInvoices
+      tags: [invoices]
+      summary: List invoices
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/Search"
+      responses:
+        "200":
+          description: Invoice list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invoice"
+    post:
+      operationId: createInvoice
+      tags: [invoices]
+      summary: Create an invoice intake record
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceInput"
+      responses:
+        "201":
+          description: Created invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /orgs/{orgSlug}/invoices/{invoiceId}/run-match:
+    post:
+      operationId: runInvoiceMatch
+      tags: [invoices]
+      summary: Run a three-way invoice match
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - name: invoiceId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Match result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchResult"
+  /orgs/{orgSlug}/invoices/{invoiceId}/resolve-exception:
+    post:
+      operationId: resolveInvoiceException
+      tags: [invoices]
+      summary: Resolve an invoice exception
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - name: invoiceId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExceptionResolutionInput"
+      responses:
+        "200":
+          description: Resolved invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /orgs/{orgSlug}/payment-batches:
+    get:
+      operationId: listPaymentBatches
+      tags: [payments]
+      summary: List payment batches
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      responses:
+        "200":
+          description: Payment batch list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentBatch"
+    post:
+      operationId: createPaymentBatch
+      tags: [payments]
+      summary: Create an idempotent payment batch
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 8 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentBatchInput"
+      responses:
+        "201":
+          description: Created payment batch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentBatch"
+  /orgs/{orgSlug}/payment-batches/{batchId}/export:
+    post:
+      operationId: exportPaymentBatch
+      tags: [payments]
+      summary: Export a payment batch to the accounting adapter
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+        - name: batchId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Exported batch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentBatch"
+  /orgs/{orgSlug}/budgets:
+    get:
+      operationId: listBudgets
+      tags: [budgets]
+      summary: List live budget rollups
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      responses:
+        "200":
+          description: Budget list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Budget"
+  /orgs/{orgSlug}/analytics/overview:
+    get:
+      operationId: getAnalyticsOverview
+      tags: [analytics]
+      summary: Get finance leadership analytics
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      responses:
+        "200":
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverview"
+  /orgs/{orgSlug}/settings/approval-policies:
+    get:
+      operationId: listApprovalPolicies
+      tags: [settings]
+      summary: List approval policies
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      responses:
+        "200":
+          description: Approval policies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApprovalPolicy"
+  /orgs/{orgSlug}/audit-log:
+    get:
+      operationId: listAuditLog
+      tags: [audit]
+      summary: List immutable audit events
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      responses:
+        "200":
+          description: Audit log
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEvent"
+components:
+  parameters:
+    OrgSlug:
+      name: orgSlug
+      in: path
+      required: true
+      schema: { type: string, minLength: 1 }
+    RequisitionId:
+      name: requisitionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Status:
+      name: status
+      in: query
+      required: false
+      schema: { type: string }
+    Search:
+      name: search
+      in: query
+      required: false
+      schema: { type: string }
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ErrorResponse:
+      type: object
+      properties:
+        error: { type: string }
+      required: [error]
+    DashboardSummary:
+      type: object
+      required: [organization, metrics, attention, activity]
+      properties:
+        organization: { type: string }
+        metrics:
+          type: object
+          required: [allocatedCents, committedCents, spentCents, remainingCents, pendingApprovalCount, exceptionCount]
+          properties:
+            allocatedCents: { type: integer }
+            committedCents: { type: integer }
+            spentCents: { type: integer }
+            remainingCents: { type: integer }
+            pendingApprovalCount: { type: integer }
+            exceptionCount: { type: integer }
+        attention:
+          type: array
+          items: { $ref: "#/components/schemas/ApprovalItem" }
+        activity:
+          type: array
+          items: { $ref: "#/components/schemas/AuditEvent" }
+    RequisitionInput:
+      type: object
+      required: [description, estimatedAmountCents, costCenter, category, neededByDate, justification]
+      properties:
+        description: { type: string, minLength: 3 }
+        estimatedAmountCents: { type: integer, minimum: 1 }
+        costCenter: { type: string, minLength: 1 }
+        category: { type: string, minLength: 1 }
+        neededByDate: { type: string, format: date }
+        justification: { type: string, minLength: 10 }
+        vendorName: { type: ["string", "null"] }
+    Requisition:
+      type: object
+      required: [id, number, description, estimatedAmountCents, currency, costCenter, category, requester, neededByDate, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: string }
+        description: { type: string }
+        estimatedAmountCents: { type: integer }
+        currency: { type: string }
+        costCenter: { type: string }
+        category: { type: string }
+        requester: { type: string }
+        neededByDate: { type: string, format: date }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+        currentApprover: { type: ["string", "null"] }
+        justification: { type: ["string", "null"] }
+    RequisitionDetail:
+      allOf:
+        - $ref: "#/components/schemas/Requisition"
+        - type: object
+          required: [approvalSteps]
+          properties:
+            approvalSteps:
+              type: array
+              items: { $ref: "#/components/schemas/ApprovalStep" }
+    ApprovalStep:
+      type: object
+      required: [id, order, approver, status]
+      properties:
+        id: { type: string, format: uuid }
+        order: { type: integer }
+        approver: { type: string }
+        status: { type: string }
+        decidedAt: { type: ["string", "null"], format: date-time }
+        note: { type: ["string", "null"] }
+    ApprovalItem:
+      type: object
+      required: [id, requisitionId, requisitionNumber, description, requester, amountCents, costCenter, ageHours, status]
+      properties:
+        id: { type: string, format: uuid }
+        requisitionId: { type: string, format: uuid }
+        requisitionNumber: { type: string }
+        description: { type: string }
+        requester: { type: string }
+        amountCents: { type: integer }
+        costCenter: { type: string }
+        ageHours: { type: number }
+        status: { type: string }
+    ApprovalDecisionInput:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approve, reject, request_changes]
+        note: { type: ["string", "null"] }
+    PurchaseOrderInput:
+      type: object
+      required: [vendorName, costCenter, lineItems]
+      properties:
+        requisitionId: { type: ["string", "null"], format: uuid }
+        vendorName: { type: string, minLength: 1 }
+        costCenter: { type: string }
+        lineItems:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/PurchaseOrderLineInput" }
+    PurchaseOrderLineInput:
+      type: object
+      required: [description, quantity, unitPriceCents]
+      properties:
+        description: { type: string }
+        quantity: { type: number, minimum: 0.01 }
+        unitPriceCents: { type: integer, minimum: 1 }
+        glCode: { type: ["string", "null"] }
+    PurchaseOrder:
+      type: object
+      required: [id, number, vendorName, totalAmountCents, currency, status, issuedAt, lineItems]
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: string }
+        vendorName: { type: string }
+        totalAmountCents: { type: integer }
+        currency: { type: string }
+        status: { type: string }
+        issuedAt: { type: ["string", "null"], format: date-time }
+        lineItems:
+          type: array
+          items: { $ref: "#/components/schemas/PurchaseOrderLineInput" }
+    VendorInput:
+      type: object
+      required: [name, paymentTerms]
+      properties:
+        name: { type: string, minLength: 2 }
+        paymentTerms: { type: string }
+        preferred: { type: boolean }
+    Vendor:
+      type: object
+      required: [id, name, status, paymentTerms, spendCents, exceptionRate, onTimeRate]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        status: { type: string }
+        paymentTerms: { type: string }
+        spendCents: { type: integer }
+        exceptionRate: { type: number }
+        onTimeRate: { type: number }
+    ReceivingInput:
+      type: object
+      required: [purchaseOrderId, quantity, conditionNotes]
+      properties:
+        purchaseOrderId: { type: string, format: uuid }
+        quantity: { type: number, minimum: 0.01 }
+        conditionNotes: { type: string }
+    ReceivingRecord:
+      type: object
+      required: [id, purchaseOrderId, quantity, receivedAt, conditionNotes]
+      properties:
+        id: { type: string, format: uuid }
+        purchaseOrderId: { type: string, format: uuid }
+        quantity: { type: number }
+        receivedAt: { type: string, format: date-time }
+        conditionNotes: { type: string }
+    InvoiceInput:
+      type: object
+      required: [vendorName, invoiceNumber, totalAmountCents, dueDate]
+      properties:
+        vendorName: { type: string }
+        invoiceNumber: { type: string }
+        purchaseOrderId: { type: ["string", "null"], format: uuid }
+        totalAmountCents: { type: integer, minimum: 1 }
+        dueDate: { type: string, format: date }
+    Invoice:
+      type: object
+      required: [id, invoiceNumber, vendorName, totalAmountCents, dueDate, status, matchStatus]
+      properties:
+        id: { type: string, format: uuid }
+        invoiceNumber: { type: string }
+        vendorName: { type: string }
+        totalAmountCents: { type: integer }
+        dueDate: { type: string, format: date }
+        status: { type: string }
+        matchStatus: { type: string }
+        purchaseOrderNumber: { type: ["string", "null"] }
+    MatchResult:
+      type: object
+      required: [invoiceId, status, lines, summary]
+      properties:
+        invoiceId: { type: string, format: uuid }
+        status: { type: string }
+        lines:
+          type: array
+          items:
+            type: object
+            required: [description, invoiceQuantity, poQuantity, receivedQuantity, status]
+            properties:
+              description: { type: string }
+              invoiceQuantity: { type: number }
+              poQuantity: { type: number }
+              receivedQuantity: { type: number }
+              status: { type: string }
+        summary: { type: string }
+    ExceptionResolutionInput:
+      type: object
+      required: [resolution, note]
+      properties:
+        resolution:
+          type: string
+          enum: [approve, dispute, request_correction]
+        note: { type: string, minLength: 5 }
+    PaymentBatchInput:
+      type: object
+      required: [invoiceIds]
+      properties:
+        invoiceIds:
+          type: array
+          minItems: 1
+          items: { type: string, format: uuid }
+    PaymentBatch:
+      type: object
+      required: [id, number, invoiceCount, totalAmountCents, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: string }
+        invoiceCount: { type: integer }
+        totalAmountCents: { type: integer }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+    Budget:
+      type: object
+      required: [id, label, costCenter, category, allocatedCents, committedCents, spentCents, remainingCents, utilizationPct]
+      properties:
+        id: { type: string, format: uuid }
+        label: { type: string }
+        costCenter: { type: string }
+        category: { type: string }
+        allocatedCents: { type: integer }
+        committedCents: { type: integer }
+        spentCents: { type: integer }
+        remainingCents: { type: integer }
+        utilizationPct: { type: number }
+    AnalyticsOverview:
+      type: object
+      required: [spendByCategory, budgetVsActual, approvalSla, maverickSpend]
+      properties:
+        spendByCategory:
+          type: array
+          items:
+            type: object
+            required: [label, amountCents]
+            properties:
+              label: { type: string }
+              amountCents: { type: integer }
+        budgetVsActual:
+          type: array
+          items:
+            type: object
+            required: [label, allocatedCents, spentCents]
+            properties:
+              label: { type: string }
+              allocatedCents: { type: integer }
+              spentCents: { type: integer }
+        approvalSla:
+          type: object
+          required: [averageDays, targetDays, onTimePct]
+          properties:
+            averageDays: { type: number }
+            targetDays: { type: number }
+            onTimePct: { type: number }
+        maverickSpend:
+          type: object
+          required: [amountCents, pctOfSpend]
+          properties:
+            amountCents: { type: integer }
+            pctOfSpend: { type: number }
+    ApprovalPolicy:
+      type: object
+      required: [id, name, version, isActive, rules]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        version: { type: integer }
+        isActive: { type: boolean }
+        rules:
+          type: array
+          items:
+            type: object
+            required: [condition, chain]
+            properties:
+              condition: { type: string }
+              chain:
+                type: array
+                items: { type: string }
+    AuditEvent:
+      type: object
+      required: [id, actor, action, target, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        actor: { type: string }
+        action: { type: string }
+        target: { type: string }
+        metadata: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+

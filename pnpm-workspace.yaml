@@ -1,0 +1,47 @@
+# ============================================================================
+# SECURITY: Minimum release age for npm packages (supply-chain attack defense)
+# ============================================================================
+#
+# Requires that any npm package version has been published for at least 1 day
+# (1440 minutes) before pnpm will allow installing it. Most malicious npm
+# releases are discovered and pulled within hours, so this delay provides a
+# strong safety buffer against supply-chain attacks.
+#
+# Do not disable this setting. If you need to install a package before the
+# 1-day window has passed (e.g. an urgent security fix), add it to
+# `minimumReleaseAgeExclude` below, and only for packages from a trustworthy
+# publisher — remove the exclusion again once the window has passed.
+# ============================================================================
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude: []
+
+packages:
+  - apps/*
+  - packages/*
+
+catalog:
+  '@tailwindcss/vite': ^4.1.14
+  '@tanstack/react-query': ^5.90.21
+  '@types/node': ^25.3.3
+  '@types/react': ^19.2.0
+  '@types/react-dom': ^19.2.0
+  '@vitejs/plugin-react': ^5.0.4
+  clsx: ^2.1.1
+  drizzle-orm: ^0.45.2
+  lucide-react: ^0.545.0
+  react: 19.1.0
+  react-dom: 19.1.0
+  tailwind-merge: ^3.3.1
+  tailwindcss: ^4.1.14
+  vite: ^7.3.2
+  zod: ^3.25.76
+
+autoInstallPeers: false
+
+onlyBuiltDependencies:
+  - esbuild
+
+overrides:
+  # drizzle-kit pulls in an older, vulnerable esbuild transitively; pin it.
+  '@esbuild-kit/esm-loader': 'npm:tsx@^4.21.0'
+  esbuild: '0.27.3'
