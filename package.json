@@ -3,8 +3,9 @@
   "version": "0.0.0",
   "license": "UNLICENSED",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
-    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"This project is managed with pnpm. Run: corepack enable && pnpm install\" >&2; exit 1 ;; esac'",
+    "preinstall": "node -e \"const fs=require('fs');for(const f of ['package-lock.json','yarn.lock']){try{fs.unlinkSync(f)}catch{}}const ua=process.env.npm_config_user_agent||'';if(!ua.startsWith('pnpm')){console.error('This project is managed with pnpm. Run: corepack enable && pnpm install');process.exit(1)}\"",
     "dev:web": "pnpm --filter @workspace/web run dev",
     "dev:api": "pnpm --filter @workspace/api run dev",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
