@@ -2,10 +2,9 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./middleware/clerk-proxy";
+import { CLERK_PROXY_PATH, clerkProxyMiddleware } from "./middleware/clerk-proxy";
 
 const app: Express = express();
 
@@ -32,11 +31,10 @@ app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(getClerkProxyHost(req) ?? "", process.env.CLERK_PUBLISHABLE_KEY),
-  })),
-);
+// Reads CLERK_SECRET_KEY / CLERK_PUBLISHABLE_KEY from the environment.
+// Only pass an explicit publishableKey resolver if you've set up a real
+// Clerk proxy (see middleware/clerk-proxy.ts) — most deployments haven't.
+app.use(clerkMiddleware());
 
 app.use("/api", router);
 
