@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { requireAuth } from "../middleware/require-auth";
 import { procurementErrorHandler } from "../middleware/error-handler";
 import healthRouter from "./health";
+import organizationRouter from "./organization";
 import dashboardRouter from "./dashboard";
 import requisitionsRouter from "./requisitions";
 import approvalsRouter from "./approvals";
@@ -21,6 +22,7 @@ const router: IRouter = Router();
 router.use(healthRouter);
 
 router.use(requireAuth);
+router.use(organizationRouter);
 router.use(dashboardRouter);
 router.use(requisitionsRouter);
 router.use(approvalsRouter);

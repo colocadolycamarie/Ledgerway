@@ -36,6 +36,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /orgs/{orgSlug}:
+    get:
+      operationId: getOrganization
+      tags: [settings]
+      summary: Get organization profile
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      responses:
+        "200":
+          description: Organization profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationProfile"
+    patch:
+      operationId: updateOrganization
+      tags: [settings]
+      summary: Rename the organization
+      parameters:
+        - $ref: "#/components/parameters/OrgSlug"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationBody"
+      responses:
+        "200":
+          description: Updated organization profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationProfile"
   /orgs/{orgSlug}/dashboard:
     get:
       operationId: getDashboard
@@ -520,6 +553,18 @@ components:
           type: string
       required:
         - status
+    OrganizationProfile:
+      type: object
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        baseCurrency: { type: string }
+      required: [name, slug, baseCurrency]
+    UpdateOrganizationBody:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+      required: [name]
     ErrorResponse:
       type: object
       properties:

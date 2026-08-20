@@ -7,7 +7,7 @@ export const clerkAppearance = {
   options: {
     logoPlacement: 'inside' as const,
     logoLinkUrl: BASE_PATH || '/',
-    logoImageUrl: `${window.location.origin}${BASE_PATH}/logo.svg`,
+    logoImageUrl: `${window.location.origin}${BASE_PATH}/logo.png`,
   },
   variables: {
     colorPrimary: '#0c315d',
